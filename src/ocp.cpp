@@ -4,8 +4,6 @@
 #include <vector>
 #include <casadi/casadi.hpp>
 
-using namespace casadi;
-
 /*
     INPUT DATA
 */
@@ -32,6 +30,14 @@ std::vector<double> getDataFromFile(const std::string& filename) {
 
     file.close();
     return doubleValues;
+}
+
+std::vector<casadi_int> createIntVector(double start, double end, double step) {
+    std::vector<casadi_int> numbers;
+    for (double value = start; value <= end; value += step) {
+        numbers.push_back(value);
+    }
+    return numbers;
 }
 
 /*
@@ -77,13 +83,15 @@ double pv_model(const double& irradiation) {
 */
 int main(){
 
-    std::vector<double> irradiation = getDataFromFile("irradiation.txt");
+    std::vector<double> irradiationData = getDataFromFile("irradiation.txt");
+    std::vector<casadi_int> timeData = createIntVector(0, irradiationData.size(), 1);
+    casadi::Function irradiation = casadi::interpolant("irradiation", "bspline", timeData, irradiationData);
 
-    std::vector<double> hydrogemDemand = getDataFromFile("hydrogen_demand.txt");
+    std::vector<double> hydrogemDemandData = getDataFromFile("hydrogen_demand.txt");
+    timeData = createIntVector(0, hydrogemDemandData.size(), 1);
+    casadi::Function hydrogemDemand = casadi::interpolant("hydrogemDemand", "bspline", timeData, hydrogemDemandData);
 
     double test = pv_model(1);
-
-
 
 	return 0;
 }
