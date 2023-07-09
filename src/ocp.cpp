@@ -7,7 +7,6 @@
 /*
     INPUT DATA
 */
-
 std::vector<std::vector<double>> createTimeData(const int size) {
     std::vector<std::vector<double>> timeGrid;
     std::vector<double> times;
@@ -89,7 +88,46 @@ casadi::MX pvPowerModel(const casadi::MX& irradiation) {
 
    return i_ps * v_ps;
 }
-    
+
+casadi::MX electrolyzerProdModel(const casadi::MX& i_el) {
+    // Declare constants
+    double F = 96485.33289;  // Faraday constant
+
+    // Declare electrolyzer parameters
+    int N_el = 6;            // Number of cells
+
+    return (N_el * i_el / (F * 1000)) * 60 * 11.126; // Hydrogen production rate
+}
+
+/*
+    PHOTOVOLTAIC PANEL MODEL
+*/
+casadi::MX electrolyzerPowerModel(const casadi::MX& i_el) {
+    // Declare constants
+    const double R = 8.314;                 // Gas constant
+    const double F = 96485.33289;           // Faraday constant
+
+    // Declare electrolyzer parameters
+    const double A_el = 212.5;              // Stack area
+    const int N_el = 6;                     // Number of cells
+    const double P_h2 = 6.9;                // Hydrogen partial pressure
+    const double P_o2 = 1.3;                // Oxygen partial pressure
+    const double I_ao = 1.0631e-6;          // Anode current density
+    const double I_co = 1e-3;               // Cathode current density
+    const double delta_b = 178e-6;          // Membrane thickness
+    const int lambda_b = 21;                // Membrane water content
+    const int t_el = 298;                   // Temperature
+
+    // Intermediate electrolyzer variables
+    casadi::MX i_el_d = i_el / A_el; // Current density
+    double ro_b = (0.005139 * lambda_b - 0.00326) * exp(1268 * (1 / 303 - 1 / t_el)); // Membrane conductivity
+    double v_el_0 = 1.23 - 0.0009 * (t_el - 298) + 2.3 * R * t_el * log(P_h2 * P_h2 * P_o2) / (4 * F); // Reversible potential of the electrolyzer
+    casadi::MX v_etd = (R * t_el / F) * asinh(0.5 * i_el_d / I_ao) + (R * t_el / F) * asinh(0.5 * i_el_d / I_co) + i_el_d * delta_b / ro_b; // Electrode overpotential
+    casadi::MX v_el_hom_ion = delta_b * i_el / (A_el * ro_b); // Ohmic overvoltage and ionic overpotential
+
+    casadi::MX v_el = N_el * (v_el_0 + v_etd + v_el_hom_ion); // Electrolyzer voltage
+    return i_el * v_el; // Electrolyzer consumed power
+}
 
 /*
     OPTIMAL CONTROL
@@ -122,8 +160,13 @@ int main(){
     casadi::Function hydrogemDemand = casadi::interpolant("hydrogemDemand", "bspline", timeData, hydrogemDemandData);
 
     // Models
-    casadi::MX pv_power = pvPowerModel(irradiation(time)[0]);
-    std::cout << pv_power << std::endl;
+    casadi::MX p_pv = pvPowerModel(irradiation(time)[0]);
+    casadi::MX p_el = electrolyzerPowerModel(i_el);
+    casadi::MX f_h2 = electrolyzerProdModel(i_el);
+    casadi::MX v_h2_dot = 1 - hydrogemDemand(time)[0];
+
+    // Lagrange cost function
+    casadi::MX f_l = pow((p_el - p_pv), 2);
 
 	return 0;
 }
