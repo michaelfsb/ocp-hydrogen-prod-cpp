@@ -7,12 +7,26 @@
 /*
     INPUT DATA
 */
+
+std::vector<std::vector<double>> createTimeData(const int size) {
+    std::vector<std::vector<double>> timeGrid;
+    std::vector<double> times;
+
+    for (double time = 0.0; time < size; time++) {
+        times.push_back({ time });
+    }
+
+    timeGrid.push_back(times);
+
+    return timeGrid;
+}
+
 std::vector<double> getDataFromFile(const std::string& filename) {
-    std::vector<double> doubleValues;
+    std::vector<double> dataSerie;
     std::ifstream file(filename);
     if (!file) {
         std::cerr << "Failed to open file: " << filename << std::endl;
-        return doubleValues;
+        return dataSerie;
     }
 
     std::string line;
@@ -20,8 +34,7 @@ std::vector<double> getDataFromFile(const std::string& filename) {
     while (std::getline(file, line)) {
         try {
             double value = std::stod(line);
-            doubleValues.push_back(value);
-            std::cout << value << " ";
+            dataSerie.push_back(value);
         }
         catch (const std::exception&) {
             // Ignore the line if the conversion to double fails
@@ -29,7 +42,8 @@ std::vector<double> getDataFromFile(const std::string& filename) {
     }
 
     file.close();
-    return doubleValues;
+
+    return dataSerie;
 }
 
 std::vector<casadi_int> createIntVector(double start, double end, double step) {
@@ -83,15 +97,19 @@ double pv_model(const double& irradiation) {
 */
 int main(){
 
+    std::cout << "----->>>>> INICIO !!!!!!!!!!!!!!";
+
+
     std::vector<double> irradiationData = getDataFromFile("irradiation.txt");
-    std::vector<casadi_int> timeData = createIntVector(0, irradiationData.size(), 1);
+    std::vector<std::vector<double>> timeData = createTimeData(irradiationData.size());
     casadi::Function irradiation = casadi::interpolant("irradiation", "bspline", timeData, irradiationData);
 
     std::vector<double> hydrogemDemandData = getDataFromFile("hydrogen_demand.txt");
-    timeData = createIntVector(0, hydrogemDemandData.size(), 1);
+    timeData = createTimeData(hydrogemDemandData.size());
     casadi::Function hydrogemDemand = casadi::interpolant("hydrogemDemand", "bspline", timeData, hydrogemDemandData);
 
-    double test = pv_model(1);
+
+    double test_pv_model = pv_model(1);
 
 	return 0;
 }
