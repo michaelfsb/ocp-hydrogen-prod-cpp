@@ -1,8 +1,42 @@
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
 #include <casadi/casadi.hpp>
 
 using namespace casadi;
 
+/*
+    INPUT DATA
+*/
+std::vector<double> getDataFromFile(const std::string& filename) {
+    std::vector<double> doubleValues;
+    std::ifstream file(filename);
+    if (!file) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return doubleValues;
+    }
+
+    std::string line;
+
+    while (std::getline(file, line)) {
+        try {
+            double value = std::stod(line);
+            doubleValues.push_back(value);
+            std::cout << value << " ";
+        }
+        catch (const std::exception&) {
+            // Ignore the line if the conversion to double fails
+        }
+    }
+
+    file.close();
+    return doubleValues;
+}
+
+/*
+    PHOTOVOLTAIC PANEL MODEL
+*/
 double lambertw(const double& x) {
     const double E = 0.4586887;
 	return (1 + E) * log(6. / 5 * x / log(12. / 5 * x / log(1 + 12. / 5 * x))) - E * log(2 * x / log(1 + 2 * x));
@@ -38,10 +72,16 @@ double pv_model(const double& irradiation) {
 }
     
 
-
-
+/*
+    OPTIMAL CONTROL
+*/
 int main(){
     double test = pv_model(1);
+
+
+    std::vector<double> irradiation = getDataFromFile("irradiation.txt");
+
+
 
 	return 0;
 }

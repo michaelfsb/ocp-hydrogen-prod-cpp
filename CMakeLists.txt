@@ -98,3 +98,5 @@ file(GLOB HEADER_FILES_H ${CMAKE_SOURCE_DIR}/include/*.h)
 # casadi + ipopt test
 add_executable(OcpHydrogenProduction "src/ocp.cpp")
 target_link_libraries(OcpHydrogenProduction ${CASADI_LIBRARIES} ipopt)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/input/irradiation.txt
+    ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
