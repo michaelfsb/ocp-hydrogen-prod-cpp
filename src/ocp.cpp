@@ -108,6 +108,13 @@ int main(){
     timeData = createTimeData(hydrogemDemandData.size());
     casadi::Function hydrogemDemand = casadi::interpolant("hydrogemDemand", "bspline", timeData, hydrogemDemandData);
 
+    casadi::MX testeMX2 = casadi::MX(750);
+    std::cout << "2: " << testeMX2 << std::endl;
+    casadi::MX testeMX3 = casadi::MX::sym("teste");
+    std::cout << "3: " << testeMX3 << std::endl;
+
+    auto teste_irradiation = irradiation(testeMX2);
+    std::cout << "R: " << teste_irradiation[0] << std::endl;
 
     double test_pv_model = pv_model(1);
 
