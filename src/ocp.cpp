@@ -76,10 +76,12 @@ double pv_model(const double& irradiation) {
     OPTIMAL CONTROL
 */
 int main(){
-    double test = pv_model(1);
-
 
     std::vector<double> irradiation = getDataFromFile("irradiation.txt");
+
+    std::vector<double> hydrogemDemand = getDataFromFile("hydrogen_demand.txt");
+
+    double test = pv_model(1);
 
 
 
