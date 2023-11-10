@@ -1,5 +1,5 @@
 {
-  "image": "ryanwinter/arm-none-eabi-gcc:latest",
+  "image": "mcr.microsoft.com/devcontainers/cpp:debian-10",
   "features": {
   }
 }
